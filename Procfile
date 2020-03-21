@@ -1,1 +1,1 @@
-web: sh setup.sh && streamlit run days_since.py
+web: sh setup.sh && streamlit run app.py
