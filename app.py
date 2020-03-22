@@ -77,10 +77,10 @@ def by_(by="country"):
     if by == "state":
         selection = ["Top 10", "Select All"]
     else:
-        selection = ["Top 10, excluding China", "US vs Italy vs South Korea", "Select All"]
+        selection = ["Top 10", "US vs Italy vs South Korea", "Select All"]
     radio = st.radio("", selection)
 
-    if radio in ("Top 10", "Top 10, excluding China"):
+    if radio == "Top 10":
         multi = st.multiselect("", select_all, default=top_10)
     elif radio == "Select All":
         multi = st.multiselect("", select_all, default=select_all)
