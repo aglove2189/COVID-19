@@ -18,7 +18,14 @@ def get_df(by, type):
 def get_state_df(df, type):
     cols = [col for col in df if col not in ["Lat", "Long", "Country/Region"]]
     df = df[df["Country/Region"] == "US"][cols].rename(columns={"Province/State": "state"})
-    df["state"] = df["state"].str.split(", ").str[-1].apply(lambda x: state_abbrev_dict.get(x, x))
+    df["state"] = (
+        df["state"]
+        .str.split(", ")
+        .str[-1]
+        .str.strip()
+        .str.replace(".", "")
+        .apply(lambda x: state_abbrev_dict.get(x, x))
+    )
     df = df.melt(id_vars="state", var_name="date", value_name=f"total_{type}".lower())
     df["date"] = pd.to_datetime(df["date"])
     return df.set_index("date").groupby("state").resample("D").sum().reset_index()
@@ -58,15 +65,11 @@ def by_(by="country"):
 
     num_confirmed = st.text_input("Number of Confirmed:", 100)
     confirmed_since_df = days_since(
-        confirmed_df,
-        "total_confirmed",
-        num=int(num_confirmed),
-        groupby=by
+        confirmed_df, "total_confirmed", num=int(num_confirmed), groupby=by
     )
 
     top_10 = (
-        confirmed_since_df
-        .groupby(by)["total_confirmed"]
+        confirmed_since_df.groupby(by)["total_confirmed"]
         .max()
         .sort_values(ascending=False)
         .head(10)
@@ -101,10 +104,17 @@ def by_(by="country"):
     st.altair_chart(chart(deaths_since_df, "total_deaths", color=by))
 
     st.markdown("## Totals")
-    df = df = pd.concat([
-        confirmed_df.groupby(by)["total_confirmed"].max(),
-        deaths_df.groupby(by)["total_deaths"].max()
-    ], axis=1).sort_values("total_deaths", ascending=False).style.format("{:,}")
+    df = df = (
+        pd.concat(
+            [
+                confirmed_df.groupby(by)["total_confirmed"].max(),
+                deaths_df.groupby(by)["total_deaths"].max(),
+            ],
+            axis=1,
+        )
+        .sort_values("total_deaths", ascending=False)
+        .style.format("{:,}")
+    )
 
     st.dataframe(df)
 
