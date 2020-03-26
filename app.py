@@ -7,7 +7,7 @@ from state_abbrev import state_abbrev_dict
 
 @st.cache(allow_output_mutation=True)
 def get_df(by, type):
-    path = f"https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-{type}.csv"
+    path = f"https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_{type}_global.csv"
     df = pd.read_csv(path)
     if by == "state":
         return get_state_df(df, type)
@@ -60,8 +60,8 @@ def chart(df, y, color="country"):
 
 
 def by_(by="country"):
-    confirmed_df = get_df(by, "Confirmed")
-    deaths_df = get_df(by, "Deaths")
+    confirmed_df = get_df(by, "confirmed")
+    deaths_df = get_df(by, "deaths")
 
     num_confirmed = st.text_input("Number of Confirmed:", 100)
     confirmed_since_df = days_since(
@@ -121,10 +121,4 @@ def by_(by="country"):
 
 if __name__ == "__main__":
     st.title("COVID-19 🦠")
-
-    analysis = st.sidebar.selectbox("Choose Analysis", ["By Country", "By State"])
-
-    if analysis == "By Country":
-        by_("country")
-    else:
-        by_("state")
+    by_("country")
