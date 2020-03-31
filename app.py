@@ -2,30 +2,20 @@
 import pandas as pd
 import streamlit as st
 import altair as alt
-from state_abbrev import state_abbrev_dict
 
 
 @st.cache(allow_output_mutation=True)
-def get_df(by, type):
-    path = f"https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_{type}_global.csv"
+def get_df(type, by="global"):
+    path = f"https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_{type}_{by}.csv"
     df = pd.read_csv(path)
-    if by == "state":
+    if by == "US":
         return get_state_df(df, type)
-    else:
-        return get_country_df(df, type)
+    return get_country_df(df, type)
 
 
 def get_state_df(df, type):
-    cols = [col for col in df if col not in ["Lat", "Long", "Country/Region"]]
-    df = df[df["Country/Region"] == "US"][cols].rename(columns={"Province/State": "state"})
-    df["state"] = (
-        df["state"]
-        .str.split(", ")
-        .str[-1]
-        .str.strip()
-        .str.replace(".", "")
-        .apply(lambda x: state_abbrev_dict.get(x, x))
-    )
+    exclude = ["UID", "iso2", "iso3", "code3", "FIPS", "Admin2", "Country_Region", "Lat", "Long_", "Combined_Key"]
+    df = df[[col for col in df if col not in exclude]].rename(columns={"Province_State": "state"})
     df = df.melt(id_vars="state", var_name="date", value_name=f"total_{type}".lower())
     df["date"] = pd.to_datetime(df["date"])
     return df.set_index("date").groupby("state").resample("D").sum().reset_index()
@@ -60,8 +50,12 @@ def chart(df, y, color="country"):
 
 
 def by_(by="country"):
-    confirmed_df = get_df(by, "confirmed")
-    deaths_df = get_df(by, "deaths")
+    if by == "country":
+        confirmed_df = get_df("confirmed", "global")
+        deaths_df = get_df("deaths", "global")
+    else:
+        confirmed_df = get_df("confirmed", "US")
+        deaths_df = get_df("deaths", "US")
 
     num_confirmed = st.text_input("Number of Confirmed:", 100)
     confirmed_since_df = days_since(
@@ -104,7 +98,7 @@ def by_(by="country"):
     st.altair_chart(chart(deaths_since_df, "total_deaths", color=by))
 
     st.markdown("## Totals")
-    df = df = (
+    df = (
         pd.concat(
             [
                 confirmed_df.groupby(by)["total_confirmed"].max(),
@@ -121,4 +115,6 @@ def by_(by="country"):
 
 if __name__ == "__main__":
     st.title("COVID-19 🦠")
-    by_("country")
+
+    analysis = st.sidebar.selectbox("Choose Analysis", ["Country", "State"])
+    by_(analysis.lower())
