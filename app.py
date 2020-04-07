@@ -14,16 +14,15 @@ def get_df(type, by="global"):
 
 
 def get_state_df(df, type):
-    exclude = ["UID", "iso2", "iso3", "code3", "FIPS", "Admin2", "Country_Region", "Lat", "Long_", "Combined_Key"]
-    df = df[[col for col in df if col not in exclude]].rename(columns={"Province_State": "state"})
+    df = df.filter(regex="([0-9]+\/[0-9]+\/[0-9]+)|(Province_State)").rename(columns={"Province_State": "state"})
     df = df.melt(id_vars="state", var_name="date", value_name=f"total_{type}".lower())
     df["date"] = pd.to_datetime(df["date"])
     return df.set_index("date").groupby("state").resample("D").sum().reset_index()
 
 
 def get_country_df(df, type):
-    cols = [col for col in df if col not in ["Lat", "Long", "Province/State"]]
-    df = df[cols].rename(columns={"Country/Region": "country"})
+    cols = ["Lat", "Long", "Province/State"]
+    df = df.drop(columns=cols).rename(columns={"Country/Region": "country"})
     df["country"] = df["country"].replace({"US": "United States", "Korea, South": "South Korea"})
     df = df.melt(id_vars="country", var_name="date", value_name=f"total_{type}".lower())
     df["date"] = pd.to_datetime(df["date"])
