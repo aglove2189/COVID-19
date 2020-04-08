@@ -61,28 +61,21 @@ def by_(by="country"):
         confirmed_df, "total_confirmed", num=int(num_confirmed), groupby=by
     )
 
-    top_10 = (
+    top_5 = (
         confirmed_since_df.groupby(by)["total_confirmed"]
         .max()
         .sort_values(ascending=False)
-        .head(10)
+        .head(5)
         .index.tolist()
     )
 
     select_all = confirmed_since_df[by].unique().tolist()
-    if by == "state":
-        selection = ["Top 10", "Select All"]
-    else:
-        selection = ["Top 10", "US vs Italy vs South Korea", "Select All"]
-    radio = st.radio("", selection)
+    radio = st.radio("", ["Top 5", "Select All"])
 
-    if radio == "Top 10":
-        multi = st.multiselect("", select_all, default=top_10)
+    if radio == "Top 5":
+        multi = st.multiselect("", select_all, default=top_5)
     elif radio == "Select All":
         multi = st.multiselect("", select_all, default=select_all)
-    elif radio == "US vs Italy vs South Korea":
-        default = ["United States", "Italy", "South Korea"]
-        multi = st.multiselect("", select_all, default=default)
 
     confirmed_since_df = confirmed_since_df[confirmed_since_df[by].isin(multi)]
 
