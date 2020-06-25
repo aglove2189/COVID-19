@@ -79,19 +79,12 @@ def main():
     )
 
     select_all = confirmed_since_df[by].unique().tolist()
-    if by == "state":
-        selection = ["Top 5", "Select All"]
-    else:
-        selection = ["Top 5", "US vs Italy vs South Korea", "Select All"]
-    radio = st.radio("", selection)
+    radio = st.radio("", ["Top 5", "Select All"])
 
     if radio == "Top 5":
         multi = st.multiselect("", select_all, default=top_5)
     elif radio == "Select All":
         multi = st.multiselect("", select_all, default=select_all)
-    elif radio == "US vs Italy vs South Korea":
-        default = ["United States", "Italy", "South Korea"]
-        multi = st.multiselect("", select_all, default=default)
 
     confirmed_since_df = confirmed_since_df[confirmed_since_df[by].isin(multi)]
 
